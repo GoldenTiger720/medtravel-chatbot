@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { extractIntent } from '@/lib/ai/intent-extractor'
 import { composeResponse } from '@/lib/ai/response-composer'
+import { composeAdaptiveResponse } from '@/lib/ai/adaptive-response-composer'
+import { detectEmotion, quickEmotionCheck } from '@/lib/ai/emotion-detector'
 import { filterResponse } from '@/lib/ai/policy-filter'
 import { searchClinics } from '@/lib/db/clinic-search'
 import { searchHotels } from '@/lib/ota/hotel-service'
@@ -13,12 +15,20 @@ interface ChatRequest {
   message: string
   sessionId?: string
   locale?: string
+  conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>
+  useAdaptiveMode?: boolean // Enable intelligent, emotion-aware responses
 }
 
 export async function POST(req: NextRequest) {
   try {
     const body: ChatRequest = await req.json()
-    const { message, sessionId, locale = 'en' } = body
+    const {
+      message,
+      sessionId,
+      locale = 'en',
+      conversationHistory = [],
+      useAdaptiveMode = true, // Default to intelligent mode
+    } = body
 
     if (!message || message.trim().length === 0) {
       return NextResponse.json(
@@ -27,13 +37,25 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Step 1: Extract intent from user message
+    // Step 1: Detect emotion and analyze user's state (if adaptive mode enabled)
+    let emotionAnalysis = null
+    if (useAdaptiveMode) {
+      // Use quick check for instant feedback, then full analysis in background
+      const quickEmotion = quickEmotionCheck(message)
+      console.log('Quick emotion check:', quickEmotion)
+
+      // Full emotion analysis
+      emotionAnalysis = await detectEmotion(message)
+      console.log('Full emotion analysis:', emotionAnalysis)
+    }
+
+    // Step 2: Extract intent from user message
     const intent = await extractIntent(message)
 
-    // Step 2: Search for clinics based on intent
+    // Step 3: Search for clinics based on intent
     const clinics = await searchClinics(intent, 10)
 
-    // Step 3: Fetch hotels if needed
+    // Step 4: Fetch hotels if needed
     let hotels = null
     if (intent.needsHotel && intent.city) {
       hotels = await searchHotels({
@@ -44,7 +66,7 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    // Step 4: Fetch flights if needed
+    // Step 5: Fetch flights if needed
     let flights = null
     if (intent.needsFlight && intent.city && intent.originCity) {
       flights = await searchFlights({
@@ -55,37 +77,56 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    // Step 5: Compose response with LLM
-    const responseText = await composeResponse({
-      intent,
-      clinics: clinics.map(c => ({
-        id: c.id,
-        name: locale === 'uae' && c.nameAr ? c.nameAr : c.name,
-        city: c.city,
-        country: c.country,
-        rating: c.rating || undefined,
-        reviewCount: c.reviewCount || undefined,
-        specialties: c.specialties,
-        priceRange: c.priceRange || undefined,
-        packages: c.packages.map(p => ({
-          id: p.id,
-          name: locale === 'uae' && p.nameAr ? p.nameAr : p.name,
-          price: Number(p.price),
-          currency: p.currency,
-          duration: p.duration,
-        })),
+    // Prepare clinic data
+    const clinicData = clinics.map(c => ({
+      id: c.id,
+      name: locale === 'uae' && c.nameAr ? c.nameAr : c.name,
+      city: c.city,
+      country: c.country,
+      rating: c.rating || undefined,
+      reviewCount: c.reviewCount || undefined,
+      specialties: c.specialties,
+      priceRange: c.priceRange || undefined,
+      packages: c.packages.map(p => ({
+        id: p.id,
+        name: locale === 'uae' && p.nameAr ? p.nameAr : p.name,
+        price: Number(p.price),
+        currency: p.currency,
+        duration: p.duration,
       })),
-      hotels: hotels || undefined,
-      flights: flights || undefined,
-    })
+    }))
 
-    // Step 6: Apply policy filter
+    // Step 6: Compose response (adaptive or standard)
+    let responseText: string
+
+    if (useAdaptiveMode && emotionAnalysis) {
+      // Use intelligent, emotion-aware response composer
+      responseText = await composeAdaptiveResponse({
+        intent,
+        emotionAnalysis,
+        clinics: clinicData,
+        hotels: hotels || undefined,
+        flights: flights || undefined,
+        conversationHistory,
+      })
+    } else {
+      // Use standard response composer
+      responseText = await composeResponse({
+        intent,
+        clinics: clinicData,
+        hotels: hotels || undefined,
+        flights: flights || undefined,
+      })
+    }
+
+    // Step 7: Apply policy filter
     const filteredResponse = await filterResponse(responseText)
 
-    // Step 7: Return structured response
+    // Step 8: Return structured response with emotion metadata
     return NextResponse.json({
       message: filteredResponse,
       intent,
+      emotionAnalysis: emotionAnalysis || undefined, // Include for debugging/analytics
       cards: {
         clinics: clinics.slice(0, 5).map(c => ({
           type: 'clinic',

@@ -1,4 +1,5 @@
 import { Flight, FlightSearchParams } from './types'
+import { searchFlightsAmadeus } from './amadeus-service'
 
 // Mock flight data for MVP - Replace with real API calls to Skyscanner/Amadeus
 const MOCK_FLIGHTS: Flight[] = [
@@ -68,12 +69,22 @@ const MOCK_FLIGHTS: Flight[] = [
 ]
 
 export async function searchFlights(params: FlightSearchParams): Promise<Flight[]> {
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 600))
+  try {
+    // Try to get real-time data from Amadeus API
+    console.log('Searching flights with Amadeus API:', params)
+    const amadeusResults = await searchFlightsAmadeus(params)
 
-  // TODO: Replace with actual API calls
-  // Example: Skyscanner API, Amadeus Self-Service APIs
+    if (amadeusResults && amadeusResults.length > 0) {
+      console.log(`Found ${amadeusResults.length} flights from Amadeus`)
+      return amadeusResults
+    }
 
+    console.log('No Amadeus results, using fallback mock data')
+  } catch (error) {
+    console.error('Amadeus flight search failed, using fallback:', error)
+  }
+
+  // Fallback to mock data if Amadeus fails
   let results = MOCK_FLIGHTS
 
   if (params.maxPrice) {
@@ -109,39 +120,3 @@ export async function searchFlightsSkyscanner(params: FlightSearchParams): Promi
   return searchFlights(params) // Fallback to mock
 }
 
-/**
- * Example integration with Amadeus API
- * Requires client ID and secret
- */
-export async function searchFlightsAmadeus(params: FlightSearchParams): Promise<Flight[]> {
-  // const AMADEUS_CLIENT_ID = process.env.AMADEUS_CLIENT_ID
-  // const AMADEUS_CLIENT_SECRET = process.env.AMADEUS_CLIENT_SECRET
-
-  // // Get access token
-  // const tokenResponse = await fetch('https://api.amadeus.com/v1/security/oauth2/token', {
-  //   method: 'POST',
-  //   headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-  //   body: new URLSearchParams({
-  //     grant_type: 'client_credentials',
-  //     client_id: AMADEUS_CLIENT_ID!,
-  //     client_secret: AMADEUS_CLIENT_SECRET!,
-  //   }),
-  // })
-
-  // const { access_token } = await tokenResponse.json()
-
-  // // Search flights
-  // const response = await fetch(
-  //   `https://api.amadeus.com/v2/shopping/flight-offers?originLocationCode=${params.origin}&destinationLocationCode=${params.destination}&departureDate=${params.departureDate}&adults=${params.passengers || 1}`,
-  //   {
-  //     headers: {
-  //       'Authorization': `Bearer ${access_token}`,
-  //     },
-  //   }
-  // )
-
-  // const data = await response.json()
-  // return normalizeAmadeusResponse(data)
-
-  return searchFlights(params) // Fallback to mock
-}

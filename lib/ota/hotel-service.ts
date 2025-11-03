@@ -1,6 +1,7 @@
 import { Hotel, HotelSearchParams } from './types'
+import { searchHotelsAmadeus } from './amadeus-service'
 
-// Mock hotel data for MVP - Replace with real API calls to Expedia/Booking.com
+// Mock hotel data as fallback
 const MOCK_HOTELS: Hotel[] = [
   {
     id: 'hotel_1',
@@ -44,22 +45,29 @@ const MOCK_HOTELS: Hotel[] = [
 ]
 
 export async function searchHotels(params: HotelSearchParams): Promise<Hotel[]> {
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 500))
+  try {
+    // Try to get real-time data from Amadeus API
+    console.log('Searching hotels with Amadeus API:', params)
+    const amadeusResults = await searchHotelsAmadeus(params)
 
-  // TODO: Replace with actual API calls
-  // Example: Expedia Rapid API, Booking.com Partner Hub API
+    if (amadeusResults && amadeusResults.length > 0) {
+      console.log(`Found ${amadeusResults.length} hotels from Amadeus`)
+      return amadeusResults
+    }
 
-  // Filter based on params
+    console.log('No Amadeus results, using fallback mock data')
+  } catch (error) {
+    console.error('Amadeus hotel search failed, using fallback:', error)
+  }
+
+  // Fallback to mock data if Amadeus fails
   let results = MOCK_HOTELS
 
   if (params.maxPrice) {
     results = results.filter(hotel => hotel.pricePerNight <= params.maxPrice!)
   }
 
-  // Sort by price
   results.sort((a, b) => a.pricePerNight - b.pricePerNight)
-
   return results.slice(0, 5)
 }
 

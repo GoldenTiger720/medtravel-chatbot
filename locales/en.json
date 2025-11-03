@@ -121,7 +121,18 @@
     "dental": "Dental Care",
     "cosmetic": "Cosmetic Surgery",
     "fertility": "Fertility Treatment",
+    "orthopedic": "Orthopedic",
+    "cardiac": "Cardiac Care",
+    "general": "General Medical",
     "all": "All Specialties"
+  },
+  "templates": {
+    "title": "Popular Questions",
+    "subtitle": "Choose a question to get started",
+    "noTemplatesFound": "No templates found",
+    "browseAll": "Browse All Questions",
+    "showTemplates": "Show Question Templates",
+    "hideTemplates": "Hide Question Templates"
   },
   "footer": {
     "about": "About Us",

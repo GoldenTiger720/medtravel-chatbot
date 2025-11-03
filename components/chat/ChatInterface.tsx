@@ -3,12 +3,13 @@
 import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Send, Loader2 } from 'lucide-react'
+import { Send, Loader2, Sparkles, X } from 'lucide-react'
 import { useI18n } from '@/lib/i18n/context'
 import { ClinicCard } from '@/components/cards/ClinicCard'
 import { HotelCard } from '@/components/cards/HotelCard'
 import { FlightCard } from '@/components/cards/FlightCard'
 import { LeadDialog } from '@/components/dialogs/LeadDialog'
+import { QuestionTemplateGrid } from './QuestionTemplateGrid'
 import { generateSessionId } from '@/lib/utils'
 
 interface Message {
@@ -30,6 +31,7 @@ export function ChatInterface() {
   const [sessionId] = useState(() => generateSessionId())
   const [selectedClinicId, setSelectedClinicId] = useState<string | null>(null)
   const [isLeadDialogOpen, setIsLeadDialogOpen] = useState(false)
+  const [showTemplates, setShowTemplates] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
@@ -56,6 +58,12 @@ export function ChatInterface() {
     setIsLoading(true)
 
     try {
+      // Build conversation history for context-aware responses
+      const conversationHistory = messages.slice(-6).map(msg => ({
+        role: msg.role,
+        content: msg.content,
+      }))
+
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -63,12 +71,19 @@ export function ChatInterface() {
           message: input,
           sessionId,
           locale,
+          conversationHistory, // Send conversation context
+          useAdaptiveMode: true, // Enable emotion-aware intelligent responses
         }),
       })
 
       if (!response.ok) throw new Error('Failed to get response')
 
       const data = await response.json()
+
+      // Log emotion analysis for debugging (optional)
+      if (data.emotionAnalysis) {
+        console.log('Detected emotion:', data.emotionAnalysis)
+      }
 
       const assistantMessage: Message = {
         id: `msg_${Date.now()}_assistant`,
@@ -116,28 +131,83 @@ export function ChatInterface() {
     }
   }
 
+  const handleSelectTemplate = (question: string) => {
+    setInput(question)
+    setShowTemplates(false)
+    // Auto-submit the question
+    setTimeout(() => {
+      const form = document.querySelector('form')
+      if (form) {
+        form.requestSubmit()
+      }
+    }, 100)
+  }
+
   return (
     <div className="flex flex-col h-full">
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
         {messages.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
-            <h2 className="text-2xl font-bold">{t.chat.title}</h2>
-            <p className="text-muted-foreground max-w-md">
-              {t.chat.startConversation}
-            </p>
-            <div className="grid gap-2 mt-4">
-              {t.chat.exampleQueries.map((query, idx) => (
-                <Button
-                  key={idx}
-                  variant="outline"
-                  className="text-sm"
-                  onClick={() => setInput(query)}
-                >
-                  {query}
-                </Button>
-              ))}
+          <div className="space-y-6">
+            {/* Header */}
+            <div className="text-center space-y-3 py-6">
+              <div className="flex items-center justify-center gap-2">
+                <Sparkles className="h-8 w-8 text-primary" />
+                <h2 className="text-3xl font-bold">{t.chat.title}</h2>
+              </div>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                {t.chat.startConversation}
+              </p>
             </div>
+
+            {/* Toggle Button */}
+            <div className="flex justify-center">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowTemplates(!showTemplates)}
+                className="gap-2"
+              >
+                {showTemplates ? (
+                  <>
+                    <X className="h-4 w-4" />
+                    {t.templates?.hideTemplates || 'Hide Templates'}
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4" />
+                    {t.templates?.showTemplates || 'Show Templates'}
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {/* Question Templates Grid */}
+            {showTemplates ? (
+              <div className="space-y-4">
+                <div className="text-center">
+                  <h3 className="text-xl font-semibold">{t.templates?.title || 'Popular Questions'}</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {t.templates?.subtitle || 'Choose a question to get started'}
+                  </p>
+                </div>
+                <QuestionTemplateGrid onSelectQuestion={handleSelectTemplate} />
+              </div>
+            ) : (
+              /* Quick Example Queries */
+              <div className="grid gap-2 max-w-2xl mx-auto">
+                {t.chat.exampleQueries.map((query, idx) => (
+                  <Button
+                    key={idx}
+                    variant="outline"
+                    className="text-sm text-left justify-start h-auto py-3"
+                    onClick={() => setInput(query)}
+                  >
+                    {query}
+                  </Button>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

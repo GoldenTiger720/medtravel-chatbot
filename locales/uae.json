@@ -121,7 +121,18 @@
     "dental": "رعاية الأسنان",
     "cosmetic": "الجراحة التجميلية",
     "fertility": "علاج الخصوبة",
+    "orthopedic": "جراحة العظام",
+    "cardiac": "رعاية القلب",
+    "general": "طبي عام",
     "all": "جميع التخصصات"
+  },
+  "templates": {
+    "title": "الأسئلة الشائعة",
+    "subtitle": "اختر سؤالاً للبدء",
+    "noTemplatesFound": "لم يتم العثور على قوالب",
+    "browseAll": "تصفح جميع الأسئلة",
+    "showTemplates": "إظهار قوالب الأسئلة",
+    "hideTemplates": "إخفاء قوالب الأسئلة"
   },
   "footer": {
     "about": "عن الموقع",
