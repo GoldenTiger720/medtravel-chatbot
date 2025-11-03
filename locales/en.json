@@ -1,0 +1,143 @@
+{
+  "common": {
+    "appName": "MedTravel",
+    "tagline": "Your Trusted Medical Tourism Partner",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Retry",
+    "close": "Close",
+    "save": "Save",
+    "cancel": "Cancel",
+    "submit": "Submit",
+    "search": "Search",
+    "filter": "Filter",
+    "viewDetails": "View Details",
+    "bookNow": "Book Now",
+    "requestCall": "Request Call",
+    "learnMore": "Learn More"
+  },
+  "nav": {
+    "home": "Home",
+    "chat": "Chat",
+    "clinics": "Clinics",
+    "about": "About",
+    "contact": "Contact"
+  },
+  "hero": {
+    "title": "Find World-Class Medical Care Abroad",
+    "subtitle": "Discover verified clinics for dental, cosmetic, and fertility treatments with AI-powered assistance",
+    "cta": "Start Your Journey",
+    "trustBadge": "Trusted by 10,000+ patients worldwide"
+  },
+  "chat": {
+    "title": "How can we help you today?",
+    "placeholder": "Ask me anything about medical tourism...",
+    "exampleQueries": [
+      "Show me IVF clinics in Turkey under $5000",
+      "I need dental implants in Mexico with hotel",
+      "Cosmetic surgery options in Thailand"
+    ],
+    "thinking": "Searching for the best options...",
+    "noResults": "No results found. Try adjusting your search.",
+    "startConversation": "Start a conversation to get personalized recommendations",
+    "disclaimer": "This is informational only. Consult healthcare professionals for medical advice."
+  },
+  "clinic": {
+    "verified": "Verified Clinic",
+    "rating": "Rating",
+    "reviews": "reviews",
+    "specialties": "Specialties",
+    "location": "Location",
+    "priceRange": "Price Range",
+    "viewProfile": "View Full Profile",
+    "contactClinic": "Contact Clinic",
+    "about": "About This Clinic",
+    "doctors": "Our Doctors",
+    "packages": "Treatment Packages",
+    "availability": "Availability"
+  },
+  "package": {
+    "from": "From",
+    "duration": "Duration",
+    "days": "days",
+    "includes": "Includes",
+    "excludes": "Excludes",
+    "popular": "Popular Choice",
+    "selectPackage": "Select Package"
+  },
+  "hotel": {
+    "title": "Nearby Hotels",
+    "perNight": "per night",
+    "viewOnBooking": "View on Booking.com",
+    "checkAvailability": "Check Availability",
+    "distance": "Distance from clinic"
+  },
+  "flight": {
+    "title": "Flight Options",
+    "oneWay": "One-way",
+    "roundTrip": "Round trip",
+    "direct": "Direct",
+    "stops": "stops",
+    "viewFlights": "View Flights",
+    "bookFlight": "Book Flight"
+  },
+  "lead": {
+    "title": "Get in Touch",
+    "subtitle": "Fill out the form and we'll contact you within 24 hours",
+    "name": "Full Name",
+    "email": "Email Address",
+    "phone": "Phone Number",
+    "message": "Message (Optional)",
+    "preferredDate": "Preferred Travel Date",
+    "budget": "Your Budget",
+    "success": "Thank you! We'll contact you soon.",
+    "error": "Failed to submit. Please try again."
+  },
+  "save": {
+    "saved": "Saved Successfully",
+    "shareLink": "Share this link:",
+    "copyLink": "Copy Link",
+    "linkCopied": "Link copied to clipboard!"
+  },
+  "features": {
+    "aiPowered": {
+      "title": "AI-Powered Recommendations",
+      "description": "Get personalized treatment options based on your needs and budget"
+    },
+    "verifiedClinics": {
+      "title": "Verified Clinics Only",
+      "description": "All clinics are verified and accredited by international standards"
+    },
+    "allInOne": {
+      "title": "All-in-One Planning",
+      "description": "Find clinics, hotels, and flights all in one conversation"
+    },
+    "support": {
+      "title": "24/7 Support",
+      "description": "Our team is here to help you every step of the way"
+    }
+  },
+  "specialties": {
+    "dental": "Dental Care",
+    "cosmetic": "Cosmetic Surgery",
+    "fertility": "Fertility Treatment",
+    "all": "All Specialties"
+  },
+  "footer": {
+    "about": "About Us",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "contact": "Contact",
+    "copyright": "© 2025 MedTravel. All rights reserved."
+  },
+  "theme": {
+    "light": "Light Mode",
+    "dark": "Dark Mode",
+    "toggle": "Toggle Theme"
+  },
+  "language": {
+    "english": "English",
+    "arabic": "العربية",
+    "toggle": "Change Language"
+  }
+}

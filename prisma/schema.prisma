@@ -1,0 +1,225 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  extensions = [vector]
+}
+
+model Clinic {
+  id            String    @id @default(cuid())
+  name          String
+  nameAr        String?   // Arabic name for UAE locale
+  description   String    @db.Text
+  descriptionAr String?   @db.Text
+  city          String
+  cityAr        String?
+  country       String
+  countryAr     String?
+  address       String?
+  addressAr     String?
+  email         String?
+  phone         String?
+  website       String?
+  rating        Float?    @default(0)
+  reviewCount   Int?      @default(0)
+  imageUrl      String?
+  specialties   String[]  // Array of specialties: ["dental", "cosmetic", "fertility"]
+  accreditations String[] // e.g., ["JCI", "ISO 9001"]
+  priceRange    String?   // e.g., "$$", "$$$"
+  latitude      Float?
+  longitude     Float?
+  isVerified    Boolean   @default(true)
+  isActive      Boolean   @default(true)
+  embedding     Unsupported("vector(1536)")? // For semantic search with pgvector
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  doctors       Doctor[]
+  packages      Package[]
+  procedures    Procedure[]
+  leads         Lead[]
+  availability  Availability[]
+
+  @@index([city])
+  @@index([country])
+  @@index([specialties])
+}
+
+model Doctor {
+  id            String   @id @default(cuid())
+  clinicId      String
+  name          String
+  nameAr        String?
+  title         String   // e.g., "Dr.", "Prof."
+  specialization String
+  specializationAr String?
+  qualification String   @db.Text
+  qualificationAr String? @db.Text
+  experience    Int      // years of experience
+  imageUrl      String?
+  languages     String[] // e.g., ["English", "Arabic", "Turkish"]
+  rating        Float?   @default(0)
+  reviewCount   Int?     @default(0)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  clinic        Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  @@index([clinicId])
+  @@index([specialization])
+}
+
+model Procedure {
+  id            String   @id @default(cuid())
+  clinicId      String
+  name          String
+  nameAr        String?
+  category      String   // "dental", "cosmetic", "fertility"
+  categoryAr    String?
+  description   String   @db.Text
+  descriptionAr String?  @db.Text
+  duration      Int?     // in minutes
+  recovery      String?  // Recovery time description
+  recoveryAr    String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  clinic        Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  packages      Package[]
+
+  @@index([clinicId])
+  @@index([category])
+}
+
+model Package {
+  id            String   @id @default(cuid())
+  clinicId      String
+  procedureId   String?
+  name          String
+  nameAr        String?
+  description   String   @db.Text
+  descriptionAr String?  @db.Text
+  price         Decimal  @db.Decimal(10, 2)
+  currency      String   @default("USD")
+  duration      Int      // Duration in days
+  includes      String[] // What's included: ["Consultation", "Surgery", "Post-op care"]
+  includesAr    String[]
+  excludes      String[] // What's not included
+  excludesAr    String[]
+  isPopular     Boolean  @default(false)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  clinic        Clinic     @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  procedure     Procedure? @relation(fields: [procedureId], references: [id], onDelete: SetNull)
+  leads         Lead[]
+
+  @@index([clinicId])
+  @@index([procedureId])
+  @@index([price])
+}
+
+model Availability {
+  id            String   @id @default(cuid())
+  clinicId      String
+  date          DateTime
+  slots         Int      // Number of available slots
+  isAvailable   Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  clinic        Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  @@unique([clinicId, date])
+  @@index([clinicId])
+  @@index([date])
+}
+
+model Lead {
+  id            String   @id @default(cuid())
+  sessionId     String?  // For tracking user sessions
+  name          String?
+  email         String
+  phone         String?
+  countryCode   String?
+  message       String?  @db.Text
+  clinicId      String?
+  packageId     String?
+  hotelData     Json?    // Store selected hotel from OTA
+  flightData    Json?    // Store selected flight from OTA
+  budget        Decimal? @db.Decimal(10, 2)
+  travelDate    DateTime?
+  status        String   @default("new") // "new", "contacted", "converted", "lost"
+  source        String?  @default("chat") // "chat", "direct", "referral"
+  metadata      Json?    // Additional tracking data
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  clinic        Clinic?  @relation(fields: [clinicId], references: [id], onDelete: SetNull)
+  package       Package? @relation(fields: [packageId], references: [id], onDelete: SetNull)
+
+  @@index([email])
+  @@index([clinicId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model OtaReferral {
+  id            String   @id @default(cuid())
+  sessionId     String
+  type          String   // "hotel" or "flight"
+  provider      String   // "expedia", "booking", "skyscanner"
+  referralUrl   String   @db.Text
+  clickedAt     DateTime?
+  bookedAt      DateTime?
+  commission    Decimal? @db.Decimal(10, 2)
+  currency      String   @default("USD")
+  metadata      Json?    // Store OTA response data
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([sessionId])
+  @@index([type])
+  @@index([provider])
+  @@index([createdAt])
+}
+
+model ContentChunk {
+  id            String   @id @default(cuid())
+  content       String   @db.Text
+  contentAr     String?  @db.Text
+  type          String   // "faq", "policy", "guide"
+  category      String?  // Additional categorization
+  metadata      Json?
+  embedding     Unsupported("vector(1536)")? // For semantic search
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([type])
+  @@index([category])
+}
+
+model ChatSession {
+  id            String   @id @default(cuid())
+  userId        String?  // Optional user ID if authenticated
+  messages      Json[]   // Store conversation history
+  intent        Json?    // Store extracted intent
+  results       Json?    // Store search results
+  lastMessageAt DateTime @default(now())
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([userId])
+  @@index([createdAt])
+}
